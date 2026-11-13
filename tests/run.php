@@ -206,10 +206,18 @@ try {
     check($caps !== null, 'image processor available', Catalog\ImageProcessor::unavailableMessage());
     if ($caps !== null) {
         $src = $site . '/tmp-src.png';
-        $code = 0;
-        exec('magick -size 64x64 xc:red ' . escapeshellarg($src) . ' 2>&1', $out, $code);
-        if ($code !== 0 || !is_file($src)) {
-            exec('convert -size 64x64 xc:red ' . escapeshellarg($src) . ' 2>&1', $out, $code);
+        if (extension_loaded('gd') && function_exists('imagepng')) {
+            $im = imagecreatetruecolor(64, 64);
+            $red = imagecolorallocate($im, 255, 0, 0);
+            imagefilledrectangle($im, 0, 0, 63, 63, $red);
+            imagepng($im, $src);
+            imagedestroy($im);
+        } else {
+            $code = 0;
+            exec('magick -size 64x64 xc:red ' . escapeshellarg($src) . ' 2>&1', $out, $code);
+            if ($code !== 0 || !is_file($src)) {
+                exec('convert -size 64x64 xc:red ' . escapeshellarg($src) . ' 2>&1', $out, $code);
+            }
         }
         check(is_file($src), 'fixture image created');
         $item = $gallery->upload($ng1, [

@@ -37,6 +37,9 @@ jobs:
           tools: composer:v2
           coverage: none
 
+      - name: Install ImageMagick (fallback for WebP)
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends imagemagick
+
       - name: Verify tag matches plugin.json version
         working-directory: plugin
         run: |
