@@ -1,48 +1,66 @@
 name: Release
 
+# Тег v<версия> → тесты → ./release.sh (архив) → GitHub Release с архивом.
 on:
   push:
     tags:
       - 'v*.*.*'
 
+permissions:
+  contents: write
+
+env:
+  CORE_REF: v0.8.5
+
 jobs:
   release:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up PHP
-        uses: shivammathur/setup-php@v2
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
-          php-version: '8.4'
-          extensions: gd
-          coverage: none
+          path: plugin
+          fetch-depth: 0
 
-      - name: Checkout core
+      - name: Checkout motorchk core
         uses: actions/checkout@v4
         with:
           repository: burzilov/motorchk
-          ref: v0.8.5
-          path: motorchk-core
+          ref: ${{ env.CORE_REF }}
+          path: core
 
-      - name: Install core Composer deps
-        working-directory: motorchk-core
-        run: composer install --no-interaction --prefer-dist
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, dom, zip, gd
+          tools: composer:v2
+          coverage: none
 
-      - name: Run plugin tests
-        run: php tests/run.php "$GITHUB_WORKSPACE/motorchk-core"
-
-      - name: Build archive
+      - name: Verify tag matches plugin.json version
+        working-directory: plugin
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
-          mkdir -p dist
-          git archive --format=zip --prefix=catalog/ -o "dist/catalog-${VERSION}.zip" "$GITHUB_REF_NAME" -- \
-            plugin.json plugin.php lib templates assets examples README.md CHANGELOG.md LICENSE
+          VERSION=$(sed -n '/^[[:space:]]*"version":[[:space:]]*"[^"]*"/{s/^[[:space:]]*"version":[[:space:]]*"\([^"]*\)".*/\1/p;q;}' plugin.json)
+          if [ "${GITHUB_REF_NAME}" != "v${VERSION}" ]; then
+            echo "Тег ${GITHUB_REF_NAME} не совпадает с version ${VERSION} в plugin.json"
+            exit 1
+          fi
+          echo "VERSION=${VERSION}" >> "$GITHUB_ENV"
 
-      - name: Publish GitHub Release
+      - name: Install core dependencies
+        working-directory: core
+        run: composer install --no-dev --no-interaction --no-progress
+
+      - name: Tests
+        working-directory: plugin
+        run: php tests/run.php "$GITHUB_WORKSPACE/core"
+
+      - name: Build zip
+        working-directory: plugin
+        run: ./release.sh
+
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/catalog-*.zip
+          files: plugin/dist/catalog-${{ env.VERSION }}.zip
           generate_release_notes: true
