@@ -146,12 +146,12 @@ try {
     $settings->save([
         'image' => ['large' => 200, 'small' => 100, 'quality' => 80],
         'sections' => [
-            'equipment/accessories' => [
-                'label' => ['ru' => 'Аксессуары', 'en' => 'Accessories'],
+            'catalog/widgets' => [
+                'label' => ['ru' => 'Виджеты', 'en' => 'Widgets'],
                 'template' => 'default',
-                'media_dir' => 'products/accessories',
+                'media_dir' => 'products/widgets',
                 'fields' => [
-                    ['key' => 'customizer', 'type' => 'url', 'label' => ['ru' => 'Ссылка на конструктор', 'en' => 'Customizer']],
+                    ['key' => 'product_url', 'type' => 'url', 'label' => ['ru' => 'Ссылка на товар', 'en' => 'Product link']],
                 ],
             ],
         ],
@@ -160,46 +160,46 @@ try {
     // recreate manager so boot re-registers fields from new settings
     $plugins = new PluginManager($config);
     $ctx = $plugins->boot('catalog');
-    $fields = $plugins->pageFieldsFor(['template' => 'default', 'parent' => 'equipment/accessories'], 'equipment/accessories/ng1');
+    $fields = $plugins->pageFieldsFor(['template' => 'default', 'parent' => 'catalog/widgets'], 'catalog/widgets/item-a');
     $keys = array_map(static fn($f) => $f['key'], $fields);
-    check(in_array('customizer', $keys, true), 'customizer field registered for section child');
+    check(in_array('product_url', $keys, true), 'product_url field registered for section child');
 
     // seed pages with legacy images/group/order
     $writer = $ctx->pages();
     $cache = new Cache($site . '/cache');
     $renderer = new MarkdownRenderer();
     $loader = new PageLoader($config, $cache, $renderer);
-    $writer->create('Оборудование', 'equipment', null, 'default');
-    $writer->create('Аксессуары', 'accessories', 'equipment', 'default');
+    $writer->create('Каталог', 'catalog', null, 'default');
+    $writer->create('Виджеты', 'widgets', 'catalog', 'default');
 
-    $ng1 = $writer->create('NG1', 'ng1', 'equipment/accessories', 'default');
-    $writer->updateMeta($ng1, [
-        'images' => ['products/accessories/ng1-1.webp', 'products/accessories/ng1-2.webp'],
+    $itemA = $writer->create('Item A', 'item-a', 'catalog/widgets', 'default');
+    $writer->updateMeta($itemA, [
+        'images' => ['products/widgets/item-a-1.webp', 'products/widgets/item-a-2.webp'],
         'group' => 1,
         'order' => 20,
-        'customizer' => '/customizer/acc/ng1',
+        'product_url' => '/products/item-a',
         'published' => true,
     ]);
-    $ng2 = $writer->create('NG2', 'ng2', 'equipment/accessories', 'default');
-    $writer->updateMeta($ng2, [
+    $itemB = $writer->create('Item B', 'item-b', 'catalog/widgets', 'default');
+    $writer->updateMeta($itemB, [
         'group' => 1,
         'order' => 10,
         'published' => true,
     ]);
 
     $gallery = new Catalog\Gallery($ctx, $settings);
-    $list = $gallery->listForPage($loader->loadBySlug($ng1, false)['front_matter']);
+    $list = $gallery->listForPage($loader->loadBySlug($itemA, false)['front_matter']);
     check(count($list) === 2, 'reads existing images without migration');
-    check($list[0]['path'] === 'products/accessories/ng1-1.webp', 'preserves image order');
+    check($list[0]['path'] === 'products/widgets/item-a-1.webp', 'preserves image order');
 
-    $gallery->setPrimary($ng1, 'products/accessories/ng1-2.webp');
-    $fm = $loader->loadBySlug($ng1, false)['front_matter'];
-    check(($fm['images'][0] ?? '') === 'products/accessories/ng1-2.webp', 'set primary');
+    $gallery->setPrimary($itemA, 'products/widgets/item-a-2.webp');
+    $fm = $loader->loadBySlug($itemA, false)['front_matter'];
+    check(($fm['images'][0] ?? '') === 'products/widgets/item-a-2.webp', 'set primary');
     check(!array_key_exists('image', $fm) || $fm['image'] === null, 'clears legacy image key');
 
-    $gallery->reorder($ng1, ['products/accessories/ng1-1.webp', 'products/accessories/ng1-2.webp']);
-    $fm = $loader->loadBySlug($ng1, false)['front_matter'];
-    check(($fm['images'][0] ?? '') === 'products/accessories/ng1-1.webp', 'reorder');
+    $gallery->reorder($itemA, ['products/widgets/item-a-1.webp', 'products/widgets/item-a-2.webp']);
+    $fm = $loader->loadBySlug($itemA, false)['front_matter'];
+    check(($fm['images'][0] ?? '') === 'products/widgets/item-a-1.webp', 'reorder');
 
     // upload via ImageMagick/GD if available
     $caps = Catalog\ImageProcessor::capabilities();
@@ -220,13 +220,13 @@ try {
             }
         }
         check(is_file($src), 'fixture image created');
-        $item = $gallery->upload($ng1, [
+        $item = $gallery->upload($itemA, [
             'name' => 't.png',
             'type' => 'image/png',
             'tmp_name' => $src,
             'error' => UPLOAD_ERR_OK,
             'size' => filesize($src),
-        ], 'products/accessories');
+        ], 'products/widgets');
         check(str_ends_with($item['path'], '.webp'), 'upload writes webp path');
         check(is_file($site . '/media/' . $item['path']), 'large webp exists');
         check(is_file($site . '/media/' . Catalog\Gallery::thumbPath($item['path'])), 'sm webp exists');
@@ -234,20 +234,20 @@ try {
 
     // section board layout
     $board = new Catalog\SectionBoard($ctx);
-    $rows = $board->rows('equipment/accessories');
+    $rows = $board->rows('catalog/widgets');
     check($rows !== [], 'board rows from group/order');
-    $board->applyLayout('equipment/accessories', [
-        [$ng2],
-        [$ng1],
+    $board->applyLayout('catalog/widgets', [
+        [$itemB],
+        [$itemA],
     ]);
-    $fm1 = $loader->loadBySlug($ng1, false)['front_matter'];
-    $fm2 = $loader->loadBySlug($ng2, false)['front_matter'];
+    $fm1 = $loader->loadBySlug($itemA, false)['front_matter'];
+    $fm2 = $loader->loadBySlug($itemB, false)['front_matter'];
     check((int) $fm2['group'] === 0 && (int) $fm1['group'] === 1, 'layout moves between rows');
 
-    $created = $board->createPage('equipment/accessories', 'Test Item', 'test-item', 'default', 1);
-    check($created === 'equipment/accessories/test-item', 'create page in section');
+    $created = $board->createPage('catalog/widgets', 'Test Item', 'test-item', 'default', 1);
+    check($created === 'catalog/widgets/test-item', 'create page in section');
     $cfm = $loader->loadBySlug($created, false)['front_matter'];
-    check(($cfm['parent'] ?? null) === 'equipment/accessories', 'create sets parent');
+    check(($cfm['parent'] ?? null) === 'catalog/widgets', 'create sets parent');
     check(empty($cfm['published']), 'create unpublished');
 
     $board->setPublished($created, true);
@@ -255,11 +255,11 @@ try {
 
     // remove from gallery without deleting files
     if ($caps !== null) {
-        $before = $gallery->listForPage($loader->loadBySlug($ng1, false)['front_matter']);
+        $before = $gallery->listForPage($loader->loadBySlug($itemA, false)['front_matter']);
         $path = $before[count($before) - 1]['path'];
-        $abs = $gallery->remove($ng1, $path, false);
+        $abs = $gallery->remove($itemA, $path, false);
         check(is_file($abs[0]), 'remove without delete_files keeps file');
-        $afterPaths = array_column($gallery->listForPage($loader->loadBySlug($ng1, false)['front_matter']), 'path');
+        $afterPaths = array_column($gallery->listForPage($loader->loadBySlug($itemA, false)['front_matter']), 'path');
         check(!in_array($path, $afterPaths, true), 'remove drops from images');
     }
 
@@ -273,22 +273,22 @@ try {
         (new AdminRouter($config))->dispatchAdmin('/admin-panel/plugins/catalog/');
     });
     check($st === 200, 'admin index', (string) $st);
-    check(str_contains($body, 'equipment/accessories') || str_contains($body, 'Аксессуары'), 'admin lists section');
+    check(str_contains($body, 'catalog/widgets') || str_contains($body, 'Виджеты'), 'admin lists section');
 
     [$st] = capture(static function () use ($config): void {
-        (new AdminRouter($config))->dispatchAdmin('/admin-panel/plugins/catalog/sections/equipment/accessories');
+        (new AdminRouter($config))->dispatchAdmin('/admin-panel/plugins/catalog/sections/catalog/widgets');
     });
     check($st === 200, 'admin section board');
 
     // CSRF on mutating route
     [$st, $body] = capture(static function () use ($config): void {
-        (new AdminRouter($config))->dispatchAdmin('/admin-panel/plugins/catalog/sections/equipment/accessories/layout');
-    }, 'POST', ['layout' => json_encode([[$ng1]])]);
+        (new AdminRouter($config))->dispatchAdmin('/admin-panel/plugins/catalog/sections/catalog/widgets/layout');
+    }, 'POST', ['layout' => json_encode([[$itemA]])]);
     check($st === 403, 'layout without csrf → 403');
 
     [$st, $body] = capture(static function () use ($config): void {
-        (new AdminRouter($config))->dispatchAdmin('/admin-panel/plugins/catalog/sections/equipment/accessories/layout');
-    }, 'POST', ['_csrf' => $token, 'layout' => json_encode([[$ng1], [$ng2]])]);
+        (new AdminRouter($config))->dispatchAdmin('/admin-panel/plugins/catalog/sections/catalog/widgets/layout');
+    }, 'POST', ['_csrf' => $token, 'layout' => json_encode([[$itemA], [$itemB]])]);
     check($st === 200, 'layout with csrf');
     $json = json_decode($body, true);
     check(!empty($json['ok']), 'layout json ok');

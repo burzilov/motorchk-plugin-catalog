@@ -39,7 +39,7 @@ $e = static fn(mixed $v): string => PluginContext::e($v);
             <p class="mc-hint">Обработка изображений: <?= $e($image_caps['driver']) ?>.</p>
         <?php endif; ?>
         <?php if ($sections === []): ?>
-            <p class="mc-muted">Разделы ещё не настроены. Откройте <a class="mc-link" href="<?= $e($plugin->adminUrl('/settings')) ?>">настройки</a> и добавьте slug раздела (например <code>equipment/accessories</code>).</p>
+            <p class="mc-muted">Разделы ещё не настроены. Откройте <a class="mc-link" href="<?= $e($plugin->adminUrl('/settings')) ?>">настройки</a> и добавьте slug раздела (например <code>catalog/widgets</code>).</p>
         <?php else: ?>
             <ul class="cat-section-list">
                 <?php foreach ($sections as $slug => $meta): ?>
@@ -59,7 +59,7 @@ $e = static fn(mixed $v): string => PluginContext::e($v);
     <?php elseif ($section === 'settings'): ?>
         <form method="post" action="<?= $e($plugin->adminUrl('/settings')) ?>" class="mc-stack">
             <?= $plugin->csrfField() ?>
-            <p class="mc-hint">JSON настроек: размеры WebP и разделы с полями карточек. Пример для Миклина — в README плагина.</p>
+            <p class="mc-hint">JSON настроек: размеры WebP и разделы с полями карточек. Пример — <code>examples/settings.example.json</code> в архиве плагина.</p>
             <label class="mc-label" for="settings_json">settings.json</label>
             <textarea id="settings_json" name="settings_json" rows="24" class="mc-input mc-input--code"><?= $e($raw_json ?? '') ?></textarea>
             <button type="submit" class="mc-btn mc-btn--primary">Сохранить</button>

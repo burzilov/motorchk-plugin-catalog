@@ -1,0 +1,29 @@
+{
+  "image": { "large": 1200, "small": 480, "quality": 82 },
+  "sections": {
+    "catalog/widgets": {
+      "label": { "ru": "Виджеты", "en": "Widgets" },
+      "template": "product",
+      "media_dir": "products/widgets",
+      "fields": [
+        {
+          "key": "product_url",
+          "type": "url",
+          "label": { "ru": "Ссылка на товар", "en": "Product link" }
+        }
+      ]
+    },
+    "catalog/gadgets": {
+      "label": { "ru": "Гаджеты", "en": "Gadgets" },
+      "template": "product",
+      "media_dir": "products/gadgets",
+      "fields": [
+        {
+          "key": "product_url",
+          "type": "url",
+          "label": { "ru": "Ссылка на товар", "en": "Product link" }
+        }
+      ]
+    }
+  }
+}

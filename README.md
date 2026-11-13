@@ -32,7 +32,7 @@
 
 Поля попадают в редактор страницы ядра, если страница — сам раздел или его прямой потомок. Значения пишутся в front matter под `key`.
 
-Галерея пишет массив путей в `images:` (без префикса `/media/`, например `products/accessories/ng1-1.webp`). Первый элемент — главный кадр; при изменении галереи устаревшее поле `image` снимается, чтобы карточка темы брала `images[0]` → `-sm.webp`.
+Галерея пишет массив путей в `images:` (без префикса `/media/`, например `products/widgets/item-1.webp`). Первый элемент — главный кадр; при изменении галереи устаревшее поле `image` снимается, чтобы карточка темы брала `images[0]` → `-sm.webp`.
 
 ## Админка
 
@@ -42,41 +42,11 @@
 
 Удаление фото из галереи по умолчанию **только убирает путь из front matter**. Физическое удаление файлов — отдельный флаг `delete_files` в API (в UI по умолчанию выключен).
 
-## Пример для Миклина
+## Пример настроек
 
-```json
-{
-  "image": { "large": 1200, "small": 480, "quality": 82 },
-  "sections": {
-    "equipment/accessories": {
-      "label": { "ru": "Аксессуары", "en": "Accessories" },
-      "template": "product",
-      "media_dir": "products/accessories",
-      "fields": [
-        {
-          "key": "customizer",
-          "type": "url",
-          "label": { "ru": "Ссылка на конструктор", "en": "Customizer link" }
-        }
-      ]
-    },
-    "equipment/motors": {
-      "label": { "ru": "Моторы", "en": "Motors" },
-      "template": "product",
-      "media_dir": "products/motors",
-      "fields": [
-        {
-          "key": "customizer",
-          "type": "url",
-          "label": { "ru": "Ссылка на конструктор", "en": "Customizer link" }
-        }
-      ]
-    }
-  }
-}
-```
+Готовый файл: [`examples/settings.example.json`](examples/settings.example.json). Скопируйте в `plugins-data/catalog/settings.json` и подставьте свои slug разделов, подписи и поля.
 
-Тема Миклина уже читает `customizer`, `images`, `group`, `order` — менять шаблоны не нужно.
+Тема сайта должна читать из front matter те ключи, которые вы объявили в `fields` (плюс стандартные `images`, `group`, `order`, если ими пользуется шаблон).
 
 ## Тесты
 
