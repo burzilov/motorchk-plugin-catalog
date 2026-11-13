@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.1 — 2026-11-14
+
+### Репозиторий обновлений
+
+- В `plugin.json` указан `repository`: `burzilov/motorchk-plugin-catalog` для автообновлений из GitHub Releases.
+
 ## 0.1.0 — 2026-11-14
 
 ### Первый релиз

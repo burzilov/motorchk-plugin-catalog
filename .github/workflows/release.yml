@@ -1,0 +1,48 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: gd
+          coverage: none
+
+      - name: Checkout core
+        uses: actions/checkout@v4
+        with:
+          repository: burzilov/motorchk
+          ref: v0.8.5
+          path: motorchk-core
+
+      - name: Install core Composer deps
+        working-directory: motorchk-core
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Run plugin tests
+        run: php tests/run.php "$GITHUB_WORKSPACE/motorchk-core"
+
+      - name: Build archive
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          mkdir -p dist
+          git archive --format=zip --prefix=catalog/ -o "dist/catalog-${VERSION}.zip" "$GITHUB_REF_NAME" -- \
+            plugin.json plugin.php lib templates assets examples README.md CHANGELOG.md LICENSE
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/catalog-*.zip
+          generate_release_notes: true
