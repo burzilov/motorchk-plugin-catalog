@@ -211,7 +211,6 @@ try {
             $red = imagecolorallocate($im, 255, 0, 0);
             imagefilledrectangle($im, 0, 0, 63, 63, $red);
             imagepng($im, $src);
-            imagedestroy($im);
         } else {
             $code = 0;
             exec('magick -size 64x64 xc:red ' . escapeshellarg($src) . ' 2>&1', $out, $code);

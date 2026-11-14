@@ -102,7 +102,6 @@ final class ImageProcessor
         $sw = imagesx($src);
         $sh = imagesy($src);
         if ($sw < 1 || $sh < 1) {
-            imagedestroy($src);
             throw new \RuntimeException('Пустое изображение');
         }
 
@@ -111,19 +110,14 @@ final class ImageProcessor
         $sy = (int) (($sh - $side) / 2);
         $dst = imagecreatetruecolor($size, $size);
         if ($dst === false) {
-            imagedestroy($src);
             throw new \RuntimeException('Не удалось создать изображение');
         }
         imagealphablending($dst, false);
         imagesavealpha($dst, true);
         imagecopyresampled($dst, $src, 0, 0, $sx, $sy, $size, $size, $side, $side);
         if (!imagewebp($dst, $dest, $quality)) {
-            imagedestroy($src);
-            imagedestroy($dst);
             throw new \RuntimeException('Не удалось записать WebP');
         }
-        imagedestroy($src);
-        imagedestroy($dst);
     }
 
     private static function magickSquareWebp(string $binary, string $source, string $dest, int $size, int $quality): void
